@@ -1,0 +1,83 @@
+apply plugin: 'java-library'
+apply plugin: 'maven'
+apply plugin: 'io.qameta.allure'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath "io.qameta.allure:allure-gradle:2.8.1"
+    }
+}
+
+allure {
+    version = '2.13.0'
+    autoconfigure = false
+    aspectjweaver = true
+}
+
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+
+    compile group: 'com.accenture.atom', name: 'library-reporting-allure', version: '0.0.1', changing: true
+    compile group: 'com.accenture.atom', name: 'library-cucumber', version: '0.0.1', changing: true
+    compile group: 'com.accenture.atom', name: 'library-common', version: '0.0.1', changing: true
+    implementation group: 'org.ini4j', name: 'ini4j', version: '0.5.4'
+}
+
+task cukes(type: Test) {
+
+    def suite = "$suiteDIR" + System.getProperty("cukes.testsuite") + '.xml'
+    systemProperty "cukes.env", System.getProperty("cukes.env")
+    //systemProperty "cukes.browsercombo", System.getProperty("cukes.browsercombo")
+    //systemProperty "cukes.webdrivermanager", System.getProperty("cukes.webdrivermanager")
+    //systemProperty "cukes.tags", System.getProperty("cukes.tags")
+    systemProperty "cukes.techstack", System.properties.getProperty("cukes.techstack")
+    systemProperty "cukes.testsuite", suite
+
+    ignoreFailures = true
+
+    useTestNG() {
+        useDefaultListeners = true
+        suites suite
+    }
+
+    outputs.upToDateWhen { false }
+
+}
+
+task cucumberTag(type: Test) {
+    testLogging {
+        showStandardStreams = true
+    }
+
+    systemProperty "org.apache.logging.log4j.level", "DEBUG"
+    systemProperty "cukes.selenium.defaultFindRetries", "1"
+    def suite = "$suiteDIR" + 'CmdLineBrowserTestSuite.xml'
+
+    //systemProperty "cukes.driverPath", System.getProperty("cukes.driverPath", 'lib/drivers/')
+    systemProperty "cukes.techstack", System.getProperty("cukes.techstack",'LOCAl_FF')
+    systemProperty "cukes.env", System.getProperty("cukes.env")
+    systemProperty "cucumber.options", "classpath:features --tags " + System.properties.getProperty("cukes.tags")
+
+    useTestNG() {
+        useDefaultListeners = true
+        suites suite
+    }
+    outputs.upToDateWhen { false }
+}
+
+
